@@ -65,8 +65,19 @@ def createCamera(controller):
 
 def extractCameraImage(nparray, name):
     '''Extracts an image using a nparray'''
+
+    images_directory = "./images"
+
+    # Create directory if not exists
+    if not os.path.exists(images_directory):
+        os.makedirs(images_directory)
+
+    # Get image data
     data = im.fromarray(nparray)
-    data.save("./images/" + name + ".png")
+
+    # Save image
+    filename = name + ".png"
+    data.save(os.path.join(images_directory, filename))
 
 def removeResultFolders():
     '''Cleans result folders mentioned below'''
@@ -74,14 +85,15 @@ def removeResultFolders():
     
     for dir in dirs:
         for filename in os.listdir(dir):
-            file_path = os.path.join(dir, filename)
-            try:
-                if os.path.isfile(file_path) or os.path.islink(file_path):
-                    os.unlink(file_path)
-                elif os.path.isdir(file_path):
-                    shutil.rmtree(file_path)
-            except Exception as e:
-                print('Failed to delete %s. Reason: %s' % (file_path, e))
+            if filename != ".gitignore":
+                file_path = os.path.join(dir, filename)
+                try:
+                    if os.path.isfile(file_path) or os.path.islink(file_path):
+                        os.unlink(file_path)
+                    elif os.path.isdir(file_path):
+                        shutil.rmtree(file_path)
+                except Exception as e:
+                    print('Failed to delete %s. Reason: %s' % (file_path, e))
 
 
 
