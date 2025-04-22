@@ -18,7 +18,6 @@ There are two ways of running the program:
 2. Python: 3.5+
 3. CPU with SSE2 instruction support
 4. GPU: DX9 (shader model 3.0) or DX11 with feature level 9.3 capabilities
-5. Linux users need X server with GLX module enabled
 
 ### :white_check_mark: Step by step installation
 
@@ -26,19 +25,24 @@ There are two ways of running the program:
 
 2. Clone repository into local folder
    ```
-   git clone https://github.com/xHugo21/ai2thor-hugo.git
+   git clone https://github.com/imatrisciano/ai2thor-hugo.git
    ```
    ```
    cd ai2thor-hugo
    ```
-3. Install Anaconda / Miniconda (recommended) and run the following command to install dependencies
+   
+3. Create python virtual environment
    ```
-   conda env create -n ai2thor -f environment.yml
+   python -m venv .venv
    ```
-4. Activate the conda environment
-
+4. Activate the virtual environment
    ```
-   conda activate ai2thor
+   source ./.venv/bin/activate
+   ```
+   
+4. Install requirements
+   ```
+   pip install -r requirements.txt
    ```
 
 5. Init and update the planner submodule
@@ -54,11 +58,11 @@ There are two ways of running the program:
 6. Compile the planner
 
    ```
-   cd planner/metric-ff-macos/
+   cd planner
    ```
 
    ```
-   make
+   ./build_metric-ff.sh
    ```
 
 7. Download the pretrained neural network from the following link and drop the files into /Utils/pretrained_models/ [Pretrained Neural Network](https://drive.google.com/drive/folders/1UjADpBeBOMUKXQt-qSULIP3vM90zr_MR?usp=sharing)
