@@ -8,6 +8,7 @@ import sys
 import time
 import numpy as np
 from ai2thor.controller import Controller
+from ai2thor.platform import CloudRendering
 from ai2thor.util.metrics import (get_shortest_path_to_object_type)
 from problem_definition import ProblemDefinition
 from parser_ai2thor_pddl import ParserAI2THORPDDL
@@ -65,7 +66,8 @@ if method == '1':
         renderInstanceSegmentation=False,
         width=224,  # Controller width
         height=224,  # Controller height
-        fieldOfView=90  # Controller fiold of view
+        fieldOfView=90,  # Controller fiold of view
+        platform=CloudRendering  # Headless mode
     )
 
     # We create a camera on top of the scene and save an image
