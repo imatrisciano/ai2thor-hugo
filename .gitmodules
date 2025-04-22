@@ -1,3 +1,3 @@
-[submodule "planner/metric-ff-macos"]
-	path = planner/metric-ff-macos
-	url = https://github.com/tranchis/metric-ff-macos.git
+[submodule "planner/metric-ff-crossplatform"]
+	path = planner/metric-ff-crossplatform
+	url = https://github.com/imatrisciano/metric-ff-crossplatform.git
