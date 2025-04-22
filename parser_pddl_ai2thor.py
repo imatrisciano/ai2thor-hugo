@@ -40,7 +40,7 @@ class ParserPDDLAI2THOR:
             self.actions.append(act)
         
         # Removes last position if empty
-        if self.actions[-1] == ' ':
+        if len(self.actions) > 0 and self.actions[-1] == ' ':
             self.actions.pop()
         
 

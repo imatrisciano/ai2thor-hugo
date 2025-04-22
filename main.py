@@ -23,7 +23,10 @@ LOG = "Results/test_set_ogn_ithor_steps200/episode_0/log.txt"
 # MAIN FLOW OF THE PROGRAM
 
 # We clean the results folder before executing
-removeResultFolders()
+try:
+    removeResultFolders()
+except FileNotFoundError:
+    pass
 
 # User selects the method he wants to use.
 # 1. METADATA: uses data extracted from the simulator to get object positions and applies a automated planning in order to find the best plan to make an action in the environment
@@ -96,10 +99,11 @@ if method == '1':
             # Execute the planner with the problem file generated and the corresponding domain (based on selected action)
             plan = Planner(problem_path, output_path, problem,
                            1, 3, print=True, ogamus=False)
+            actual_plan = plan.get_plan()
 
             # Parse and execute plan into actions
             parsed = ParserPDDLAI2THOR(
-                plan.get_plan(), controller, iteration, liquid)
+                actual_plan, controller, iteration, liquid)
 
         # Final state visualization depending on the type of the problem
         printLastActionStatus(controller.last_event)
