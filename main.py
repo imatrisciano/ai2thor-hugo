@@ -14,13 +14,15 @@ from parser_ai2thor_pddl import ParserAI2THORPDDL
 from parser_pddl_ai2thor import ParserPDDLAI2THOR
 from planner import Planner
 from exec_ogamus import ExecOgamus
-from aux import printAgentStatus, printLastActionStatus, createCamera, printObjectStatus, removeResultFolders, isObjectOnScene
+from aux import printAgentStatus, printLastActionStatus, createCamera, printObjectStatus, removeResultFolders, isObjectOnScene, ensureDirectoriesExist
 
 # CONSTANTS
 DATASET = 'Datasets/test_set_ogn_ithor.json'
 LOG = "Results/test_set_ogn_ithor_steps200/episode_0/log.txt"
 
 # MAIN FLOW OF THE PROGRAM
+
+ensureDirectoriesExist()
 
 # We clean the results folder before executing
 try:
