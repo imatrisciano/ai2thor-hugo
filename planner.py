@@ -26,8 +26,7 @@ class Planner():
     def run_plan_cbp(self):
         '''Method that executes cbp_roller using argument paths'''
         try:
-            os.system(f'./planner/metric-ff/ff -o {self.domain_path} -f {
-                      self.problem_path} > {self.output_path}')
+            os.system(f'./planner/metric-ff/ff -o {self.domain_path} -f {self.problem_path} > {self.output_path}')
         except FileNotFoundError:
             raise Exception("Error executing planner: File not found\n")
 
