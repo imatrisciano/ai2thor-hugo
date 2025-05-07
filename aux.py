@@ -24,14 +24,82 @@ def isObjectOnScene(event, object):
     print("-----------------------------------------------\n")
 
 
+def is_float(string):
+    try:
+        float(string)
+        return True
+    except:
+        return False
+
+def is_dictionary(property):
+    return isinstance(property, dict)
+
+
+def property_changed(oldValue, newValue):
+    if newValue == oldValue:
+        return False
+
+    # this property was changed
+    if is_float(oldValue) and is_float(newValue):
+        # this property is a number, handle changes considering float tolerances
+        floats_differ = abs(float(oldValue) - float(newValue)) > 1e-3
+        return floats_differ
+    else:
+        return True
+
+    #property_is_dictionary = isinstance(oldValue, dict)
+    #if property_is_dictionary:
+
+
+def get_changed_properties(old, new, path = None) -> list:
+    changes = []
+    if path is None:
+        path = []
+
+    for key, value in old.items():
+        if key == "axisAlignedBoundingBox" or key == "objectOrientedBoundingBox":
+            # skip those properties, do not ever mark them as changed
+            continue
+
+        current_path = list.copy(path)
+        current_path.append(key)
+        oldValue = old[key]
+        newValue = new[key]
+        if is_dictionary(value):
+            sub_property_changes = get_changed_properties(oldValue, newValue, current_path)
+            if len(sub_property_changes) > 0:
+                changes.append(sub_property_changes)
+        else:
+            if property_changed(oldValue, newValue):
+                changes.append(current_path)
+
+    return changes
+
+
+
 def printObjectStatus(event, object):
     '''Shows full state of an object'''
     print("-----------------------------------------------")
     for obj in event.metadata["objects"]:
         if obj['objectId'] == object['objectId']:
-            for key, value in obj.items():
-                if key != 'axisAlignedBoundingBox' and key != 'objectOrientedBoundingBox':
-                    print(f'{key}: {value}')
+            changes = get_changed_properties(object, obj)
+            for changedPath in changes:
+                for path in changedPath:
+                    oldProperty = object
+                    newProperty = obj
+                    if isinstance(path, list):
+                        # navigate the nested dictionaries
+                        for key in path:
+                            oldProperty = oldProperty[key]
+                            newProperty = newProperty[key]
+                        path = ".".join(path)
+                    else:
+                        # path is an immediate property
+                        oldProperty = oldProperty[path]
+                        newProperty = newProperty[path]
+                    print(f" # '{path}' changed '{oldProperty}' ----> '{newProperty}'")
+
+            break
     print("-----------------------------------------------\n")
 
 def printLastActionStatus(event):
