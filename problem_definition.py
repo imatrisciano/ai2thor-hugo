@@ -2,6 +2,9 @@
 
 # Imports
 import os
+
+from jinja2.nodes import Literal
+
 from planner import Planner
 
 class ProblemDefinition():
@@ -31,6 +34,24 @@ class ProblemDefinition():
             "Use Up Object",
             "Drop Object (Requires holding an object)",
             "Put Object (Requires holding an object)"]
+        self.available_problems = [
+            "move",
+            "pickup",
+            "open",
+            "close",
+            "break",
+            "cook",
+            "slice",
+            "toggleon",
+            "toggleoff",
+            "dirty",
+            "clean",
+            "fill",
+            "empty",
+            "useup",
+            "drop",
+            "put"
+        ]
 
         self.available_scenes = {
             "kitchens": range(1,30+1),
@@ -43,6 +64,7 @@ class ProblemDefinition():
         self.objective_list = []
         self.method = None
         self.scene_number = None
+        self.liquids = ["coffee", "wine", "water"]
 
     @staticmethod
     def _user_choice_in_list(items: list, message: str, print_list: bool = False) -> tuple:
@@ -57,14 +79,12 @@ class ProblemDefinition():
                 if 0 <= index < len(items):
                     return index, items[index]
 
-    def method_selection(self):
+    def method_selection(self) -> str:
         '''Method that allows selecting execution type:
         1. METADATA: Uses data returned by simulator to locate objects and agent positions
         2. OGAMUS: Uses OGAMUS algorithm to scan scenes using pretrained neural networks'''
 
-        chosen_method, _ = self._user_choice_in_list(self.available_methods, "Select the method used to solve the problem: ", print_list=True)
-        chosen_method += 1  # because methods are "1" or "2" ...
-        chosen_method = str(chosen_method)
+        _, chosen_method = self._user_choice_in_list(self.available_methods, "Select the method used to solve the problem: ", print_list=True)
         self.set_method(chosen_method)
         return self.method
 
@@ -92,6 +112,7 @@ class ProblemDefinition():
                 if user_number in self.available_scenes[scene_category]:
                     invalid_input = False
                     self.scene_number = str(user_number)
+                    break
 
         return self.scene_number
 
@@ -127,124 +148,96 @@ class ProblemDefinition():
                 aux = chosen_action + 1
 
         print(f"Chosen action: {chosen_action_name}")
-        return self.set_problem(event, aux)
+        self.set_action_number(chosen_action)
 
-    def set_problem(self, event, problem_number: str):
-        # Establecer parámetros en caso de que se seleccione problema de movimiento
+        action_targets, optional_liquids = self.get_problem_targets(event, chosen_action)
 
+        _, self.objective = self._user_choice_in_list(action_targets, "Select the objective: ", print_list=True)
+        print(f'\nSelected objective is: {self.objective["objectId"]} {self.objective["name"]}\n')
+
+        if optional_liquids is not None:
+            _, self.liquid = self._user_choice_in_list(optional_liquids, "Select the liquid: ", print_list=True)
+
+        return self.problem, self.objective, self.liquid
+
+    def set_action_number(self, action_number):
+        self.set_problem_name(self.available_problems[action_number])
+
+    def set_problem_name(self, problem_name):
+        self.problem = problem_name
+
+    def set_objective(self, objective):
+        self.objective = objective
+
+    def set_liquid(self, liquid):
+        self.liquid = liquid
+
+    def get_allowed_actions(self, event) -> list:
+        holding = any(x["isPickedUp"] for x in event.metadata["objects"])
+        if holding:
+            return self.available_actions  #all of them
+        else:
+            return self.available_actions[0:-2]  #last two actions are not allowd
+
+    def get_problem_targets(self, event, problem_number):
         if (problem_number is str and not problem_number.isdigit()) \
                 or int(problem_number) < 0 \
                 or int(problem_number) > 15:
             raise ValueError("problem_number must be a string containing a number between 0 and 15")  # I know...
 
         aux = int(problem_number) + 1
-        if str(aux) == '1':
-            self.problem = "move"
-            print("----OBJECTIVE----")
-            positions = event.metadata["actionReturn"]
-            i = 0
-            for pos in positions:
-                print(f'[{i}] - {pos}')
-                i += 1
-            print("----------------")
-            aux2 = input("Select the goal position: ")
-            self.objective = positions[int(aux2)]
-            print("")
-            print(f'Selected goal position is: {self.objective}')
-
-        # Establecer parámetros en caso de que se seleccione problema de pickup
-        if str(aux) == '2':
-            self.object_selection("pickup", "pickupable", "isPickedUp", False)
-
-        if str(aux) == '3':
-            self.object_selection("open", "openable", "isOpen", False)
-
-        if str(aux) == '4':
-            self.object_selection("close", "openable", "isOpen", True)
-        
-        if str(aux) == '5':
-            self.object_selection("break", "breakable", "isBroken", False)
-        
-        if str(aux) == '6':
-            self.object_selection("cook", "cookable", "isCooked", False)
-
-        if str(aux) == '7':
-            self.object_selection("slice", "sliceable", "isSliced", False)
-
-        if str(aux) == '8':
-            self.object_selection("toggleon", "toggleable", "isToggled", False)
-
-        if str(aux) == '9':
-            self.object_selection("toggleoff", "toggleable", "isToggled", True)
-
-        if str(aux) == '10':
-            self.object_selection("dirty", "dirtyable", "isDirty", False)
-
-        if str(aux) == '11':
-            self.object_selection("clean", "dirtyable", "isDirty", True)
-        
-        if str(aux) == '12':
-            self.object_selection("fill", "canFillWithLiquid", "isFilledWithLiquid", False, True)
-
-        if str(aux) == '13':
-            self.object_selection("empty", "canFillWithLiquid", "isFilledWithLiquid", True)
-        
-        if str(aux) == '14':
-            self.object_selection("useup", "canBeUsedUp", "isUsedUp", False)
-        
-        if str(aux) == '15':
+        if aux == 1:
+            return event.metadata["actionReturn"]
+        elif aux == 2:
+            return self.list_objects("pickup", "pickupable", "isPickedUp", False)
+        elif aux == 3:
+            return self.list_objects("open", "openable", "isOpen", False)
+        elif aux == 4:
+            return self.list_objects("close", "openable", "isOpen", True)
+        elif aux == 5:
+            return self.list_objects("break", "breakable", "isBroken", False)
+        elif aux == 6:
+            return self.list_objects("cook", "cookable", "isCooked", False)
+        elif aux == 7:
+            return self.list_objects("slice", "sliceable", "isSliced", False)
+        elif aux == 8:
+            return self.list_objects("toggleon", "toggleable", "isToggled", False)
+        elif aux == 9:
+            return self.list_objects("toggleoff", "toggleable", "isToggled", True)
+        elif aux == 10:
+            return self.list_objects("dirty", "dirtyable", "isDirty", False)
+        elif aux == 11:
+            return self.list_objects("clean", "dirtyable", "isDirty", True)
+        elif aux == 12:
+            return self.list_objects("fill", "canFillWithLiquid", "isFilledWithLiquid", False, True)
+        elif aux == 13:
+            return self.list_objects("empty", "canFillWithLiquid", "isFilledWithLiquid", True)
+        elif aux == 14:
+            return self.list_objects("useup", "canBeUsedUp", "isUsedUp", False)
+        elif aux == 15:
             holding = any(x["isPickedUp"] for x in event.metadata["objects"])
             if not holding:
                 raise Exception("Action 'drop' requires holding an item")
-            self.object_selection("drop", "pickupable", "isPickedUp", True)
-        
-        if str(aux) == '16':
+            return self.list_objects("drop", "pickupable", "isPickedUp", True)
+        elif aux == 16:
             holding = any(x["isPickedUp"] for x in event.metadata["objects"])
             if not holding:
                 raise Exception("Action 'put' requires holding an item")
-            self.object_selection("put", "receptacle", "receptacle", True)
-            
-        return self.problem, self.objective, self.liquid
+            return self.list_objects("put", "receptacle", "receptacle", True)
 
+        return None
 
-    def _get_objects(self, condition1, condition2, condition2_res, select_liquid=False):
+    def _get_objects(self, condition1, condition2, condition2_res):
         """Given the specified problem type and conditions it retuns a list of objects currently in scene that meet thos criteria"""
         return [x for x in self.event.metadata["objects"] if x[condition1] and x[condition2] == condition2_res]
 
-    def object_selection(self, problem_type, condition1, condition2, condition2_res, select_liquid=False):
-        """Method that contains the objective selection of most of the problems"""
-        self.problem = problem_type
+    def list_objects(self, problem_type, condition1, condition2, condition2_res, select_liquid=False):
         possible_objects = self._get_objects(condition1, condition2, condition2_res)
 
-        if not possible_objects or len(possible_objects) == 0:
-            print("There aren't any objectives for this action. Select another or switch the scene\n")
-            return self.problem_selection(self.event)
-
-        print("----OBJECTIVE----")
-        for (i, obj) in enumerate(possible_objects):
-            print(f'[{i}] - {obj["objectId"]}')
-        print("----------------")
-
-        # Ask the user to choose an object
-        _, self.objective = self._user_choice_in_list(possible_objects, "Select the objective: ")
-        print(f'\nSelected objective is: {self.objective["objectId"]} {self.objective["name"]}\n')
-
         if select_liquid:
-            print("----LIQUID----")
-            print("[1] - Coffee")
-            print("[2] - Wine")
-            print("[3] - Water")
-            print("----------------")
-            inp = input(f'Select liquid to fill objective with: ')
-
-            if str(inp) == '1':
-                self.liquid = 'coffee'
-            elif str(inp) == '2':
-                self.liquid = 'wine'
-            elif str(inp) == '3':
-                self.liquid = 'water'
-
-        return None
+            return possible_objects, self.liquids
+        else:
+            return possible_objects, None
 
     def problem_selection_ogamus(self):
         """Method that allows user to select problems to be solved with OGAMUS"""

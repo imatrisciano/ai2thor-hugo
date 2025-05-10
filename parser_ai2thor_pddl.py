@@ -1,8 +1,20 @@
 # File that parses iTHOR state to PDDL problem file
 
+class Ai2ThorPDDLParsingException(Exception):
+    def __init__(self, message):
+        super()
+        self.message = message
+
 class ParserAI2THORPDDL:
     '''Class which contains all the methods needed to parse iTHOR state to PDDL problem file'''
-    def __init__(self, event, problem_path, problem, objective, controller):
+    def __init__(self):
+        self.event = None
+        self.metadata = None
+        self.problem_path = None
+        self.objective = None
+        self.controller = None
+
+    def parse(self, event, problem_path, problem, objective, controller):
         self.event = event
         self.metadata = self.event.metadata
         self.problem_path = problem_path
@@ -121,22 +133,23 @@ class ParserAI2THORPDDL:
         # Add interactable poses. If there isn't any interactable poses, increase the horizons (agent inclinations)        
         event2 = self.controller.step(action="GetInteractablePoses", objectId=self.objective["objectId"], standings=[True], horizons=[0])
         interactable_poses = event2.metadata["actionReturn"]
-        print(f'Interactable poses: {interactable_poses}')
+        #print(f'Interactable poses: {interactable_poses}')
         if not interactable_poses:
             event2 = self.controller.step(action="GetInteractablePoses", objectId=self.objective["objectId"], standings=[True], horizons=[0, 30])
             interactable_poses = event2.metadata["actionReturn"]
-            print(f'Interactable poses: {interactable_poses}')
+            #print(f'Interactable poses: {interactable_poses}')
             if not interactable_poses:
                 event2 = self.controller.step(action="GetInteractablePoses", objectId=self.objective["objectId"], standings=[True], horizons=[0, 30, 60])
                 interactable_poses = event2.metadata["actionReturn"]
-                print(f'Interactable poses: {interactable_poses}')
+                #print(f'Interactable poses: {interactable_poses}')
                 if not interactable_poses:
                     event2 = self.controller.step(action="GetInteractablePoses", objectId=self.objective["objectId"], standings=[True])
                     interactable_poses = event2.metadata["actionReturn"]
                     if not interactable_poses:
-                        print("Error. El objeto no se encuentra accesible para el agente\n")
-                        print("Reinicie el programa e intente con otra acción\n")
-                        exit()
+                        raise Ai2ThorPDDLParsingException("The object is not accessible by the agent")
+                        #print("Error. El objeto no se encuentra accesible para el agente\n")
+                        #print("Reinicie el programa e intente con otra acción\n")
+                        #exit()
 
         # Write interactable poses predicates
         subproblem = ""

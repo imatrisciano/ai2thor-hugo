@@ -1,8 +1,13 @@
 # File that contains the class which calls the planner
 import os
+import subprocess
+from argparse import ArgumentError
 
 
-class Planner():
+class PlannerTimedOutException(Exception):
+    pass
+
+class Planner:
     '''Class that contains the methods to call the planner and manage generated plans'''
 
     def __init__(self, problem_path, output_path, problem, search_algorithm, heuristic, print=False, ogamus=False):
@@ -25,8 +30,16 @@ class Planner():
 
     def run_plan_cbp(self):
         '''Method that executes cbp_roller using argument paths'''
+
+        command = f"./planner/metric-ff/ff -o {self.domain_path} -f {self.problem_path} > {self.output_path}"
+        timeout_seconds = 1
+        process = subprocess.Popen(command, shell=True)
         try:
-            os.system(f'./planner/metric-ff/ff -o {self.domain_path} -f {self.problem_path} > {self.output_path}')
+            #subprocess.check_output(command, shell=True, timeout=timeout_seconds)
+            process.wait(timeout_seconds)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            raise PlannerTimedOutException
         except FileNotFoundError:
             raise Exception("Error executing planner: File not found\n")
 

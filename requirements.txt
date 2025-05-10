@@ -2,3 +2,4 @@ ai2thor~=5.0.0
 numpy~=2.2.5
 opencv-python~=4.11.0.86
 pillow~=11.2.1
+tqdm

@@ -2,10 +2,20 @@
 from ai2thor.controller import Controller
 from aux import extractActionImage
 
+class PddlAi2thorParsingException(Exception):
+    def __init__(self, message):
+        super()
+        self.message = message
 
 class ParserPDDLAI2THOR:
     '''Class which contains methods needed to translate plans into actions and execute them'''
-    def __init__(self, raw_plan, controller, iteracion, liquid):
+    def __init__(self):
+        self.actions = None
+        self.executable_actions = None
+        self.controller = None
+        self.objects = None
+
+    def parse(self, raw_plan, controller, iteracion, liquid):
         self.actions = []
         self.executable_actions = []
         self.controller = controller
@@ -14,12 +24,12 @@ class ParserPDDLAI2THOR:
         # Extracts each action from the plan and stores them as an array in self.actions
         self.extract_plan(raw_plan)
 
-        print("*EXECUTING PLAN*\n")
+        # print("*EXECUTING PLAN*\n")
 
         # Parse each action
         self.parse_actions(iteracion, liquid)
 
-        print("*PLAN SUCCESSFULLY EXECUTED*\n")
+        # print("*PLAN SUCCESSFULLY EXECUTED*\n")
 
     
     def extract_plan(self, raw_plan):
@@ -124,9 +134,11 @@ class ParserPDDLAI2THOR:
             
             # If there has been an error -> print via CLI and exit
             if self.controller.last_event.metadata['errorMessage']:
-                print(f'Error: {self.controller.last_event.metadata["errorMessage"]}')
-                print("Reinicie el programa e intente con otra acción\n")
-                exit()
+                error_message = self.controller.last_event.metadata["errorMessage"]
+                raise PddlAi2thorParsingException(error_message)
+                #print(f'Error: {self.controller.last_event.metadata["errorMessage"]}')
+                #print("Reinicie el programa e intente con otra acción\n")
+                #exit()
             
             # Extract image of the final state
             extractActionImage(self.controller.last_event, f'iter{iteracion}_{n_image}')
