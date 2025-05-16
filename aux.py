@@ -104,6 +104,13 @@ def printObjectStatus(event, object):
             break
     print("-----------------------------------------------\n")
 
+def get_object_by_id(objects, id):
+    for obj in objects:
+        if obj['objectId'] == id:
+            return obj
+
+    return None
+
 def printLastActionStatus(event):
     '''Shows info of the last action executed'''
     print("-----------------------------------------------")

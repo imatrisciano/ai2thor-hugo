@@ -1,15 +1,17 @@
+import os
+
 from ai2thor.controller import Controller
 from ai2thor.platform import CloudRendering
 from ai2thor.util.metrics import (get_shortest_path_to_object_type)
 from tqdm import tqdm
 
+from ObjectStore.MetadataObjectStore import MetadataObjectStore
 from problem_definition import ProblemDefinition
 from parser_ai2thor_pddl import ParserAI2THORPDDL, Ai2ThorPDDLParsingException
 from parser_pddl_ai2thor import ParserPDDLAI2THOR, PddlAi2thorParsingException
 from planner import Planner, PlannerTimedOutException
-from aux import printAgentStatus, printLastActionStatus, createCamera, printObjectStatus, removeResultFolders, isObjectOnScene, ensureDirectoriesExist
-
-
+from aux import printAgentStatus, printLastActionStatus, createCamera, printObjectStatus, removeResultFolders, \
+    isObjectOnScene, ensureDirectoriesExist, get_changed_properties, get_object_by_id
 
 
 class MetadataRunner:
@@ -18,6 +20,8 @@ class MetadataRunner:
         self.controller = None
         self.action_counter = 1
         self.current_scene_number = None
+        self.current_action_name = None
+        self.object_store = MetadataObjectStore()
 
 
         self.ai2thor_to_pddl_parser = ParserAI2THORPDDL()
@@ -111,6 +115,7 @@ class MetadataRunner:
 
     def _autorun_explore_action_in_scene(self, event, action_number, action_name):
         self.inputs.set_action_number(action_number)
+        self.current_action_name = action_name
         action_targets, optional_liquids = self.inputs.get_problem_targets(event, action_number)
         target_has_liquid = optional_liquids is not None
 
@@ -142,10 +147,21 @@ class MetadataRunner:
         problem = self.inputs.problem
 
         try:
+            before_world_status = self.controller.last_event
+
             if problem == "drop":
                 self.controller.step(action="DropHandObject")
             else:
                 self._get_and_run_plan(event, self.action_counter, liquid, objective, output_path, problem, problem_path)
+
+            after_world_status = self.controller.last_event
+
+            #self.find_changed_properties(before_world_status, after_world_status)
+
+            # Save action data on disk
+            action_description = self._build_action_result_obj(before_world_status, after_world_status)
+            filename = f"scene_{self.current_scene_number}_{self.action_counter}.json"
+            self.object_store.store(filename, action_description)
 
             if print_success:
                 printLastActionStatus(self.controller.last_event)
@@ -170,6 +186,31 @@ class MetadataRunner:
 
         return False
 
+    def find_changed_properties(self, before_world_status, after_world_status):
+        for before_obj in before_world_status.metadata["objects"]:
+            object_id = before_obj["objectId"]
+            after_obj = get_object_by_id(after_world_status.metadata["objects"], object_id)
+            if after_obj is None:
+                print(f"Object {object_id} is not in scene anymore")
+            else:
+                changed_properties = get_changed_properties(before_obj, after_obj)
+                if len(changed_properties) > 0:
+                    print(f"Listing changed properties for object {object_id} - {before_obj['name']}")
+                    print(changed_properties)
+
+    def _build_action_result_obj(self, before_world_status, after_world_status ) -> dict:
+        obj = {
+            "scene_number": self.current_scene_number,
+            "action_name": self.current_action_name,
+            "action_counter": self.action_counter,
+            "problem": self.inputs.problem,
+            "problem_path": self.inputs.problem_path,
+            "action_objective_id": self.inputs.objective['objectId'],
+            "liquid": self.inputs.liquid,
+            "before_world_status": before_world_status.metadata,
+            "after_world_status": after_world_status.metadata
+        }
+        return obj
 
     def _get_and_run_plan(self, event, iteration, liquid, objective, output_path, problem, problem_path):
         # Using the parser, we translate the simulator state to a PDDL problem
