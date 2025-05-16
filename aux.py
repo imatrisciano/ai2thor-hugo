@@ -42,7 +42,7 @@ def property_changed(oldValue, newValue):
     # this property was changed
     if is_float(oldValue) and is_float(newValue):
         # this property is a number, handle changes considering float tolerances
-        floats_differ = abs(float(oldValue) - float(newValue)) > 1e-3
+        floats_differ = abs(float(oldValue) - float(newValue)) > 1e-2
         return floats_differ
     else:
         return True
