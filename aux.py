@@ -52,12 +52,14 @@ def property_changed(oldValue, newValue):
 
 
 def get_changed_properties(old, new, path = None) -> list:
+    properties_to_be_ignored = ["axisAlignedBoundingBox", "objectOrientedBoundingBox"]
+
     changes = []
     if path is None:
         path = []
 
     for key, value in old.items():
-        if key == "axisAlignedBoundingBox" or key == "objectOrientedBoundingBox":
+        if key in properties_to_be_ignored:
             # skip those properties, do not ever mark them as changed
             continue
 
