@@ -164,6 +164,9 @@ class MetadataRunner:
         except PlannerTimedOutException:
             if print_failures:
                 print("\t|\t|\t|\t>Action failed (planner timed out)")
+        except Exception as e:
+            if print_failures:
+                print(f"\t|\t|\t|\t>Action failed {e}")
 
         return False
 
