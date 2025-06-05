@@ -34,6 +34,7 @@ class MetadataShallowAutorunner(MetadataRunner):
         self.inputs.event = event
 
         allowed_actions = self.inputs.get_allowed_actions(event)
+        # pick one of the actions
         for action_number, action_name in enumerate(allowed_actions):
             print(f"\t|\t> Exploring {action_name}")
             if action_number != 0:  # the first action is MOVE, we are not interested in exploring this option
@@ -46,6 +47,7 @@ class MetadataShallowAutorunner(MetadataRunner):
         target_has_liquid = optional_liquids is not None
 
         successful_actions = 0
+        # execute said actions on each object in the scene, resetting the scene between executions
         for target in tqdm(action_targets):
             if target_has_liquid:
                 for liquid in self.inputs.liquids:
@@ -61,6 +63,12 @@ class MetadataShallowAutorunner(MetadataRunner):
 
         print(f"\r\t|\t|\t> ######## {successful_actions}/{len(action_targets)} successful actions")
 
+    def _get_file_paths(self):
+        problem_path, output_path = self.inputs.paths_selection(self.action_counter)
+        filename = f"scene_{self.current_scene_number}_{self.action_counter}.json"
+
+        return problem_path, output_path, filename
+
     def _autorun_run_action_on_target(self, event, objective, liquid="coffee") -> bool:
         self.inputs.set_objective(objective)
         self.inputs.set_liquid(liquid)
@@ -69,7 +77,7 @@ class MetadataShallowAutorunner(MetadataRunner):
         print_success: bool = False
         print_failures: bool = False
 
-        problem_path, output_path = self.inputs.paths_selection(self.action_counter)
+        problem_path, output_path, filename = self._get_file_paths()
         problem = self.inputs.problem
 
         try:
@@ -87,7 +95,6 @@ class MetadataShallowAutorunner(MetadataRunner):
 
             # Save action data on disk
             action_description = self._build_action_result_obj(before_world_status, after_world_status)
-            filename = f"scene_{self.current_scene_number}_{self.action_counter}.json"
             self.object_store.store(filename, action_description)
 
             if print_success:
