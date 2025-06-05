@@ -5,6 +5,7 @@ import time
 
 from problem_definition import ProblemDefinition
 from aux import removeResultFolders, ensureDirectoriesExist
+from runners.metadata_random_exploring_autorunner import MetadataRandomExploringAutorunner
 
 from runners.metadata_runner import MetadataRunner
 from runners.metadata_shallow_autorunner import MetadataShallowAutorunner
@@ -41,7 +42,8 @@ if __name__ == '__main__':
 
     if method == "METADATA":
         #runner = MetadataRunner(inputs)
-        runner = MetadataShallowAutorunner(inputs)
+        #runner = MetadataShallowAutorunner(inputs)
+        runner = MetadataRandomExploringAutorunner(inputs, exploring_repetitions=10, exploring_depth=10)
         runner.run()
 
     # If method == OGAMUS
