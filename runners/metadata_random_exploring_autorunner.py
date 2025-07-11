@@ -39,12 +39,12 @@ class MetadataRandomExploringAutorunner(MetadataShallowAutorunner):
 
         allowed_actions = self.inputs.get_allowed_actions(event)
         # pick one of the actions
-        for action_number, action_name in enumerate(allowed_actions):
-            print(f"\t|\t> Exploring {action_name}")
+        for action_number, action_name in enumerate(tqdm(allowed_actions, leave=False, desc="Action exploration")):
+            #print(f"\r\t|\t> Exploring {action_name}\t\t\t")
             if action_number != 0:  # the first action is MOVE, we are not interested in exploring this option
                 self.explored_actions = 0
                 self.successful_actions = 0
-                for _ in tqdm(range(self.exploring_repetitions)):
+                for _ in tqdm(range(self.exploring_repetitions), leave=False, desc="Repetitions"):
                     self._autorun_explore_action_in_scene(event, action_number, action_name)
                     self._reload_scene()
                     self.inputs.event = event
