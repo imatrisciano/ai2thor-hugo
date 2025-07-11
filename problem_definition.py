@@ -32,8 +32,9 @@ class ProblemDefinition():
             "Fill Object",
             "Empty Object",
             "Use Up Object",
-            "Drop Object (Requires holding an object)",
-            "Put Object (Requires holding an object)"]
+            "Drop Object",
+            "Put Object"
+        ]
         self.available_problems = [
             "move",
             "pickup",
