@@ -68,10 +68,14 @@ class MetadataRandomExploringAutorunner(MetadataShallowAutorunner):
                         # print(f"\t|\t|\t> Running {action_name} on object {target['name']} and liquid {liquid}")
                         if self._autorun_run_action_on_target(event, random_target, liquid):
                             self.successful_actions += 1
+                            # update "event" so the next iteration is based on the updated world status
+                            event = self.controller.last_event
                 else:
                     # print(f"\t|\t|\t> Running {action_name} on object {target['name']}")
                     if self._autorun_run_action_on_target(event, random_target):
                         self.successful_actions += 1
+                        # update "event" so the next iteration is based on the updated world status
+                        event = self.controller.last_event
 
             # after the action was executed, reload the list of available actions
             allowed_actions = self.inputs.get_allowed_actions(event)
