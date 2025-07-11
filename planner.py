@@ -39,6 +39,7 @@ class Planner:
             process.wait(timeout_seconds)
         except subprocess.TimeoutExpired:
             process.kill()
+            subprocess.Popen("killall ff", shell=True)
             raise PlannerTimedOutException
         except FileNotFoundError:
             raise Exception("Error executing planner: File not found\n")
