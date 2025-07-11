@@ -47,7 +47,8 @@ class MetadataRandomExploringAutorunner(MetadataShallowAutorunner):
                 for _ in tqdm(range(self.exploring_repetitions)):
                     self._autorun_explore_action_in_scene(event, action_number, action_name)
                     self._reload_scene()
-                print(f"\r\t|\t|\t> ######## {self.successful_actions}/{self.explored_actions} successful actions")
+                    self.inputs.event = event
+                # print(f"\r\t|\t|\t> {self.successful_actions}/{self.explored_actions} successful actions")
 
     def _autorun_explore_action_in_scene(self, event, action_number, action_name):
         # pick a random target and then keep picking random actions and targets
@@ -70,12 +71,14 @@ class MetadataRandomExploringAutorunner(MetadataShallowAutorunner):
                             self.successful_actions += 1
                             # update "event" so the next iteration is based on the updated world status
                             event = self.controller.last_event
+                            self.inputs.event = event
                 else:
                     # print(f"\t|\t|\t> Running {action_name} on object {target['name']}")
                     if self._autorun_run_action_on_target(event, random_target):
                         self.successful_actions += 1
                         # update "event" so the next iteration is based on the updated world status
                         event = self.controller.last_event
+                        self.inputs.event = event
 
             # after the action was executed, reload the list of available actions
             allowed_actions = self.inputs.get_allowed_actions(event)
