@@ -175,9 +175,9 @@ class ProblemDefinition():
     def get_allowed_actions(self, event) -> list:
         holding = any(x["isPickedUp"] for x in event.metadata["objects"])
         if holding:
-            return self.available_actions  #all of them
+            return self.available_actions  # all of them
         else:
-            return self.available_actions[0:-2]  #last two actions are not allowd
+            return self.available_actions[0:-2]  # last two actions are not allowed (drop and put-down)
 
     def get_problem_targets(self, event, problem_number):
         if (problem_number is str and not problem_number.isdigit()) \
