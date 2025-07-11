@@ -43,7 +43,7 @@ if __name__ == '__main__':
     if method == "METADATA":
         #runner = MetadataRunner(inputs)
         #runner = MetadataShallowAutorunner(inputs)
-        runner = MetadataRandomExploringAutorunner(inputs, exploring_repetitions=10, exploring_depth=10)
+        runner = MetadataRandomExploringAutorunner(inputs, exploring_repetitions=4, exploring_depth=32)
         runner.run()
 
     # If method == OGAMUS
