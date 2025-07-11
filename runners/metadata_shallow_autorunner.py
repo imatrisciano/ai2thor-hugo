@@ -85,6 +85,21 @@ class MetadataShallowAutorunner(MetadataRunner):
 
             if problem == "drop":
                 self.controller.step(action="DropHandObject")
+            if problem == "put":
+                held_object = None
+                current_objects = self.inputs.event.metadata["objects"]
+                for obj in current_objects:
+                    if obj["isPickedUp"]:
+                        held_object = obj
+                        break
+                if held_object is not None:
+                    #held_object_id = held_object["objectId"]
+                    receptacle_object_id = objective["objectId"]
+                    self.controller.step(dict(
+                        action='PutObject',
+                        #objectId=held_object_id,
+                        #receptacleObjectId=receptacle_object_id))
+                        objectId=receptacle_object_id))
             else:
                 self._get_and_run_plan(event, self.action_counter, liquid, objective, output_path, problem,
                                        problem_path)
