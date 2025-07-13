@@ -14,6 +14,9 @@ class MetadataRandomExploringAutorunner(MetadataShallowAutorunner):
 
         self.explored_actions = 0
         self.successful_actions = 0
+        self.current_action_number = 0
+        self.current_repetition = 0
+        self.current_depth = 0
 
     def run(self):
         """Explores each of the available scenes and tries to run every action"""
@@ -41,18 +44,28 @@ class MetadataRandomExploringAutorunner(MetadataShallowAutorunner):
         # pick one of the actions
         for action_number, action_name in enumerate(tqdm(allowed_actions, leave=False, desc="Action exploration")):
             #print(f"\r\t|\t> Exploring {action_name}\t\t\t")
+            self.current_action_number = action_number
             if action_number != 0:  # the first action is MOVE, we are not interested in exploring this option
                 self.explored_actions = 0
                 self.successful_actions = 0
-                for _ in tqdm(range(self.exploring_repetitions), leave=False, desc="Repetitions"):
+                for i in tqdm(range(self.exploring_repetitions), leave=False, desc="Repetitions"):
+                    self.current_repetition = i
                     self._autorun_explore_action_in_scene(event, action_number, action_name)
                     self._reload_scene()
                     self.inputs.event = event
                 # print(f"\r\t|\t|\t> {self.successful_actions}/{self.explored_actions} successful actions")
 
+    def _get_file_paths(self):
+        problem_name = f"scene_{self.current_scene_number}_{self.current_action_number}_{self.current_repetition}_{self.current_depth}"
+        problem_path, output_path = self.inputs.paths_selection(problem_name)
+        filename = f"{problem_name}.json"
+
+        return problem_path, output_path, filename
+
     def _autorun_explore_action_in_scene(self, event, action_number, action_name):
         # pick a random target and then keep picking random actions and targets
-        for _ in range(self.exploring_depth):
+        for i in range(self.exploring_depth):
+            self.current_depth = i
             self.inputs.set_action_number(action_number)
             self.current_action_name = action_name
             action_targets, optional_liquids = self.inputs.get_problem_targets(event, action_number)
